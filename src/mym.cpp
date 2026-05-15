@@ -504,26 +504,29 @@ void mexFunction(int nlhs, mxArray*plhs[], int nrhs, const mxArray*prhs[]) {
             mexErrMsgTxt("Couldn\'t initialize MySQL connection object");
 
         const char*ssl_input = "none";
-        int mode_option = SSL_MODE_PREFERRED;
+        bool ssl_enforce = false;
 
         if (nrhs>=(jarg+5))
             ssl_input = getstring(prhs[jarg+4]);
 
         if (!strcasecmp(ssl_input, "true")) {
             ssl_input = "true";
-            mode_option = SSL_MODE_REQUIRED;
+            ssl_enforce = true;
         }
         else if (!strcasecmp(ssl_input, "false")) {
             ssl_input = "false";
-            mode_option = SSL_MODE_DISABLED;
+            ssl_enforce = false;
         }
         else if (strstr (ssl_input,"{")) {
-            mode_option = SSL_MODE_REQUIRED;
+            ssl_enforce = true;
             mexErrMsgIdAndTxt("mYm:TLS:InvalidStruct",
                 "Custom TLS struct definition not supported yet.");
         }
 
-        mysql_options(conn, MYSQL_OPT_SSL_MODE, &mode_option);
+        mysql_options(conn, MYSQL_OPT_SSL_ENFORCE, &ssl_enforce);
+
+        bool verify_cert = false;
+        mysql_options(conn, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &verify_cert);
 
         if (nlhs<1) {
             mexPrintf("Connecting to  host = %s", (host) ? host : "localhost");
